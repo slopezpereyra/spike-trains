@@ -3,3 +3,4 @@ pyright
 numpy
 matplotlib
 seaborn
+jupyter

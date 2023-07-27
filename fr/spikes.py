@@ -67,16 +67,88 @@ class SpikeTrain :
         self.T = T
         self.Δt = Δt
         self.t = np.arange(0, self.T + self.Δt, self.Δt)
-        self.spike_train = None
+        self.spike_train = []
 
     def gen_spike_train(self):
         pass
 
-    def plot_spike_train(self, x_size=15, y_size=5):
+    def plot_spike_train(self, x_size=15, y_size=5, save=False):
         fig, ax = plt.subplots(figsize=(x_size, y_size))
         res = sns.lineplot(x=self.t, y=self.spike_train, ax=ax)
-        res.get_figure().savefig("spike_trainb.png")
+        if save:
+            res.get_figure().savefig("spike_trainb.png")
         return res
+
+    def linear_delta_filter(self, Δt):
+        """Approximate r(t) using the window function 
+            
+                            {  1/Δt     t ∈ [-Δt/2, Δt/2]
+                    w(t) = -{
+                            {  0        otherwise
+
+        Algorithmically, the function iteratively takes slices of ρ(t) of size 
+        2 * Δt (or less out of bounds) and computes the average number of spikes 
+        for each slice. Returns a list of length equal to the length of self.t 
+        the time dimension with each average.
+
+        Mathematically, this function slides a window of size 2 * Δt across
+        the time domain. At each point t the window is centered at t. 
+        w(t) is evaluated and thus the average spike count is computed for 
+        each window.
+
+        Args:
+            Δt (int > 0):   Half the number of time-units comprised by each 
+                            window.
+        """
+
+        N = len(self.spike_train)
+        counts = []
+        for i in range(N):
+            lower_bound = i - Δt if i > Δt else 0
+            upper_bound = i + Δt if i + Δt <= N - 1 else N - 1
+            bin = self.spike_train[lower_bound:upper_bound]
+            counts.append(bin.count(1)/Δt)
+
+        return counts
+
+
+    def gaussian_filter(self, σ):
+        """Approximate r(t) using the window function 
+            
+                            {  1/Δt     t ∈ [-Δt/2, Δt/2]
+                    w(t) = -{
+                            {  0        otherwise
+
+        Algorithmically, the function iteratively takes slices of ρ(t) of size 
+        2 * Δt (or less out of bounds) and computes the average number of spikes 
+        for each slice. Returns a list of length equal to the length of self.t 
+        the time dimension with each average.
+
+        Mathematically, this function slides a window of size 2 * Δt across
+        the time domain. At each point t the window is centered at t. 
+        w(t) is evaluated and thus the average spike count is computed for 
+        each window.
+
+        Args:
+            Δt (int > 0):   Half the number of time-units comprised by each 
+                            window.
+        """
+
+        N = len(self.spike_train)
+        g = lambda t:  (1/(math.sqrt(2* math.pi) * σ)) * np.exp(-t**2/(2*σ**2))
+
+        spike_times = [self.t[index]
+                         for index, value in enumerate(self.spike_train)
+                         if value == 1]
+
+
+        results = []
+        for i in range(N):
+            distances = [self.t[i] - x for x in spike_times]
+            r_of_t = sum([g(d) for d in distances])
+            results.append(r_of_t)
+        
+        return results
 
 
 
@@ -203,12 +275,6 @@ class TuningCurve:
 #    return r_max * math.exp(-0.5 * ((s - s_max)/sigma)**2)
 
 
-
-tuncurve = TuningCurve(r_max=1, s_max=-20, σ=1, range=[-40, 40])
-spikes = NonConstantSpikeTrain(T = 100, Δt = 0.1, 
-                               tuncurve=tuncurve)
-spikes.spike_train = spikes.gen_spike_train()
-spikes.plot_spike_train()
 
 
 
