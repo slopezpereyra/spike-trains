@@ -115,23 +115,25 @@ class SpikeTrain :
     def gaussian_filter(self, σ):
         """Approximate r(t) using the window function 
             
-                            {  1/Δt     t ∈ [-Δt/2, Δt/2]
-                    w(t) = -{
-                            {  0        otherwise
+                    w(t) = 1/(√(2π)σ) ⋅ exp(- τ²/ (2σ²))
 
-        Algorithmically, the function iteratively takes slices of ρ(t) of size 
-        2 * Δt (or less out of bounds) and computes the average number of spikes 
-        for each slice. Returns a list of length equal to the length of self.t 
-        the time dimension with each average.
+        where σ is a parameter that governs the intensity with which 
+        distant spikes affect the value at t (analogous to Δt on the 
+        delta filter).
 
-        Mathematically, this function slides a window of size 2 * Δt across
-        the time domain. At each point t the window is centered at t. 
-        w(t) is evaluated and thus the average spike count is computed for 
-        each window.
+        Algorithmically, the function computes at each point t in self.t the 
+        value of w(t - s) for every spike-time s. A list of equal length as 
+        t is returned with these values.
+
+        Mathematically, this function slides a Gaussian window of σ amplitude 
+        across the time domain. At each point t the window is centered at t and 
+
+                            ∫ w(τ)ρ(t - τ) dτ
+
+        is computed with integral bounds 0 and T. 
 
         Args:
-            Δt (int > 0):   Half the number of time-units comprised by each 
-                            window.
+            σ (float > 0): Amplitude of the Gaussian window.
         """
 
         N = len(self.spike_train)
