@@ -190,9 +190,9 @@ class NonConstantSpikeTrain (SpikeTrain) :
         variation of r = f(s), the firing rate as a function of a stimulus 
         parameter. The stimulus parameter is on its turn  a function s = g(t) 
         of time.
-    stimcurve : ndarray 
-        An array representing the values of s(t) the stimulus parameter over
-        time. It has the same length as t.
+    stimcurve : f : ℝ → ℝ
+        A mapping from ℝ to ℝ that is the function s(t) of a stimulus parameter
+        with respect to time.
 
     Methods
     -------
@@ -200,16 +200,15 @@ class NonConstantSpikeTrain (SpikeTrain) :
         The tuning curve function.
     """
 
-    def __init__(self, T, Δt, tuncurve):
+    def __init__(self, T, Δt, tuncurve, stimcurve):
         super().__init__(T, Δt) 
         self.tuncurve = tuncurve
-        self.stimcurve = np.arange(tuncurve.range[0],
-                            tuncurve.range[1] + self.Δt, 
-                           (tuncurve.range[1] - tuncurve.range[0])/999)
+        self.stimcurve = stimcurve
 
     def gen_spike_train(self):
         δ = lambda x: 1 if x >= random.random() else 0
-        ρ = [δ(self.tuncurve.f(self.stimcurve[x]) * self.Δt) for x in range(len(self.t))] 
+        f, g = self.tuncurve.f, self.stimcurve
+        ρ = [δ(f(g(x)) * self.Δt) for x in self.t] 
         return(ρ)
 
 
