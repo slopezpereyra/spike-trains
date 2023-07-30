@@ -12,16 +12,21 @@ bleach==6.0.0             # via nbconvert
 certifi==2023.7.22        # via requests
 cffi==1.15.1              # via argon2-cffi-bindings
 charset-normalizer==3.2.0  # via requests
+click==8.1.6              # via click-default-group, cloup, manim
+click-default-group==1.2.2  # via manim
+cloup==0.7.1              # via manim
+colour==0.1.5             # via manim
 comm==0.1.3               # via ipykernel
 contourpy==1.1.0          # via matplotlib
 cycler==0.11.0            # via matplotlib
 debugpy==1.6.7            # via ipykernel
-decorator==5.1.1          # via ipython
+decorator==5.1.1          # via ipython, manim
 defusedxml==0.7.1         # via nbconvert
 executing==1.2.0          # via stack-data
 fastjsonschema==2.18.0    # via nbformat
 fonttools==4.41.1         # via matplotlib
 fqdn==1.5.1               # via jsonschema
+glcontext==2.4.0          # via moderngl
 greenlet==2.0.2           # via pynvim
 idna==3.4                 # via anyio, jsonschema, requests
 ipykernel==6.25.0         # via ipywidgets, jupyter, jupyter-console, jupyterlab, qtconsole
@@ -29,6 +34,7 @@ ipython==8.14.0           # via ipykernel, ipywidgets, jupyter-console
 ipython-genutils==0.2.0   # via qtconsole
 ipywidgets==8.0.7         # via jupyter
 isoduration==20.11.0      # via jsonschema
+isosurfaces==0.1.0        # via manim
 jedi==0.18.2              # via ipython
 jinja2==3.1.2             # via jupyter-server, jupyterlab, jupyterlab-server, nbconvert
 json5==0.9.14             # via jupyterlab-server
@@ -48,19 +54,28 @@ jupyterlab-pygments==0.2.2  # via nbconvert
 jupyterlab-server==2.24.0  # via jupyterlab, notebook
 jupyterlab-widgets==3.0.8  # via ipywidgets
 kiwisolver==1.4.4         # via matplotlib
+manim==0.14.0             # via -r requirements.in
+manimpango==0.4.3         # via manim
+mapbox-earcut==0.12.11    # via manim
+markdown-it-py==3.0.0     # via rich
 markupsafe==2.1.3         # via jinja2, nbconvert
 matplotlib==3.7.2         # via -r requirements.in, seaborn
 matplotlib-inline==0.1.6  # via ipykernel, ipython
+mdurl==0.1.2              # via markdown-it-py
 mistune==3.0.1            # via nbconvert
+moderngl==5.8.2           # via manim, moderngl-window
+moderngl-window==2.4.1    # via manim
 msgpack==1.0.5            # via pynvim
+multipledispatch==1.0.0   # via pyrr
 nbclient==0.8.0           # via nbconvert
 nbconvert==7.7.3          # via jupyter, jupyter-server
 nbformat==5.9.1           # via jupyter-server, nbclient, nbconvert
 nest-asyncio==1.5.6       # via ipykernel
+networkx==2.8.8           # via manim
 nodeenv==1.8.0            # via pyright
 notebook==7.0.0           # via jupyter
 notebook-shim==0.2.3      # via jupyterlab, notebook
-numpy==1.25.1             # via -r requirements.in, contourpy, matplotlib, pandas, seaborn
+numpy==1.25.1             # via -r requirements.in, contourpy, isosurfaces, manim, mapbox-earcut, matplotlib, moderngl-window, pandas, pyrr, scipy, seaborn
 overrides==7.3.1          # via jupyter-server
 packaging==23.1           # via ipykernel, jupyter-server, jupyterlab, jupyterlab-server, matplotlib, nbconvert, qtconsole, qtpy
 pandas==2.0.3             # via seaborn
@@ -68,18 +83,22 @@ pandocfilters==1.5.0      # via nbconvert
 parso==0.8.3              # via jedi
 pexpect==4.8.0            # via ipython
 pickleshare==0.7.5        # via ipython
-pillow==10.0.0            # via matplotlib
+pillow==10.0.0            # via manim, matplotlib, moderngl-window
 platformdirs==3.9.1       # via jupyter-core
 prometheus-client==0.17.1  # via jupyter-server
 prompt-toolkit==3.0.39    # via ipython, jupyter-console
 psutil==5.9.5             # via ipykernel
 ptyprocess==0.7.0         # via pexpect, terminado
 pure-eval==0.2.2          # via stack-data
+pycairo==1.24.0           # via manim
 pycparser==2.21           # via cffi
-pygments==2.15.1          # via ipython, jupyter-console, nbconvert, qtconsole
+pydub==0.25.1             # via manim
+pyglet==1.5.27            # via moderngl-window
+pygments==2.15.1          # via ipython, jupyter-console, manim, nbconvert, qtconsole, rich
 pynvim==0.4.3             # via -r requirements.in
 pyparsing==3.0.9          # via matplotlib
 pyright==1.1.318          # via -r requirements.in
+pyrr==0.10.3              # via moderngl-window
 python-dateutil==2.8.2    # via arrow, jupyter-client, matplotlib, pandas
 python-json-logger==2.0.7  # via jupyter-events
 pytz==2023.3              # via pandas
@@ -88,23 +107,30 @@ pyzmq==25.1.0             # via ipykernel, jupyter-client, jupyter-console, jupy
 qtconsole==5.4.3          # via jupyter
 qtpy==2.3.1               # via qtconsole
 referencing==0.30.0       # via jsonschema, jsonschema-specifications
-requests==2.31.0          # via jupyterlab-server
+requests==2.31.0          # via jupyterlab-server, manim
 rfc3339-validator==0.1.4  # via jsonschema, jupyter-events
 rfc3986-validator==0.1.1  # via jsonschema, jupyter-events
+rich==13.4.2              # via manim
 rpds-py==0.9.2            # via jsonschema, referencing
+scipy==1.11.1             # via manim
+screeninfo==0.6.7         # via manim
 seaborn==0.12.2           # via -r requirements.in
 send2trash==1.8.2         # via jupyter-server
 six==1.16.0               # via asttokens, bleach, python-dateutil, rfc3339-validator
+skia-pathops==0.7.4       # via manim
 sniffio==1.3.0            # via anyio
 soupsieve==2.4.1          # via beautifulsoup4
+srt==3.5.3                # via manim
 stack-data==0.6.2         # via ipython
 terminado==0.17.1         # via jupyter-server, jupyter-server-terminals
 tinycss2==1.2.1           # via nbconvert
 tornado==6.3.2            # via ipykernel, jupyter-client, jupyter-server, jupyterlab, notebook, terminado
+tqdm==4.65.0              # via manim
 traitlets==5.9.0          # via comm, ipykernel, ipython, ipywidgets, jupyter-client, jupyter-console, jupyter-core, jupyter-events, jupyter-server, jupyterlab, matplotlib-inline, nbclient, nbconvert, nbformat, qtconsole
 tzdata==2023.3            # via pandas
 uri-template==1.3.0       # via jsonschema
 urllib3==2.0.4            # via requests
+watchdog==3.0.0           # via manim
 wcwidth==0.2.6            # via prompt-toolkit
 webcolors==1.13           # via jsonschema
 webencodings==0.5.1       # via bleach, tinycss2
@@ -112,4 +138,4 @@ websocket-client==1.6.1   # via jupyter-server
 widgetsnbextension==4.0.8  # via ipywidgets
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==68.0.0        # via nodeenv
+setuptools==68.0.0        # via manim, nodeenv
