@@ -413,26 +413,3 @@ class TuningCurve:
     def f(self, s):
         return self.r_max * math.exp(-0.5 * ((s - self.s_max)/self.σ)**2)
 
-
-
-#def gen_spike_train(duration, bin_size, 
-#                    r_max=2, s_max=0, sigma=2):
-#    δ = lambda x: 1 if x >= random.random() else 0
-#    t = np.arange(0, duration + bin_size, bin_size)
-#    print(t)
-#    s_of_t = np.arange(-40, 40 + bin_size, 80/999)
-#    print(s_of_t)
-#    ρ = [δ( tuning_curve(s_of_t[x], r_max, s_max, sigma) * bin_size) for x in range(len(t))] 
-#    print(ρ)
-#    res = sns.lineplot(x=t, y=ρ, ax=ax)
-#    res.get_figure().savefig("spike_train.png")
-#
-#
-#def tuning_curve(s, r_max, s_max, sigma):
-#    return r_max * math.exp(-0.5 * ((s - s_max)/sigma)**2)
-
-
-
-
-
-
