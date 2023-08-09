@@ -110,6 +110,16 @@ class SpikeTrain :
                          if value == 1]
         return(spike_times)
 
+    def linear_delta_filter_point(self, i, Δt):
+        N = len(self.spike_train)
+        lower_bound = i - Δt if i > Δt else 0
+        upper_bound = i + Δt if i + Δt <= N - 1 else N - 1
+        bin = self.spike_train[lower_bound:upper_bound]
+        return bin.count(1)/Δt
+
+
+
+
     def linear_delta_filter(self, Δt):
         """Approximate r(t) using the window function 
             
@@ -141,6 +151,14 @@ class SpikeTrain :
             counts.append(bin.count(1)/Δt)
 
         return counts
+
+    def gaussian_filter_point(self, t, σ):
+        g = lambda t:  (1/(math.sqrt(2* math.pi) * σ)) * np.exp(-t**2/(2*σ**2))
+
+        distances = [t - x for x in self.spike_times]
+        r_of_t = sum([g(d) for d in distances])
+        
+        return r_of_t
 
 
     def gaussian_filter(self, σ):
@@ -199,6 +217,68 @@ class SpikeTrain :
         ρ_avg = [x/trials for x in ρ]
         self.n_avg = sum(counts)/trials
         return ρ_avg
+
+    def get_average_fr(self):
+        """Returns the average firing rate based on the average 
+        spike train."""
+        return self.n_avg/self.T
+
+    def point_firing_rate(self, t):
+        """
+        A time dependent definition of the firing rate: 
+
+            1/Δt * ∫ ⟨ρ(τ) dτ 
+
+            where the lower and upper integral bounds are t and t + Δt, 
+            respectively.
+
+        Args:
+            t: Time-point at which to estimate the firing rate.
+        """
+        index = np.where(self.t == t)[0][0]
+        avg_ρ_of_t = self.avg_spike_train[index]
+        return 1/self.Δt * avg_ρ_of_t
+
+    def firing_rate(self):
+        """
+        Produces a list with the values of the firing rate function r(t) for
+        all t.
+        """
+
+        return [self.point_firing_rate(t) for t in self.t]
+
+    def point_autocorrelation(self, τ):
+        """
+        The autocorrelation of ρ with itself at time τ.
+
+        Args:
+            τ (int): An index measuring time distance.
+
+        """
+
+        st = self.avg_spike_train
+        r = self.get_average_fr()
+        N = len(self.t)
+
+        integrand = []
+        for t in range(N):
+            t_plus_tau = t + τ if t + τ < N else (t + τ) % N
+            a = st[t] - r 
+            b = st[t_plus_tau]
+            integrand.append(a * b)
+        return sum(integrand)/self.T
+
+    def autocorrelation(self):
+        """
+        Returns a list with the values of the autocorrelation function of 
+        ρ with itself at each time point.
+        """
+
+        return [self.point_autocorrelation(t) for t in range(len(self.t))]
+
+
+
+
 
 class NonConstantSpikeTrain (SpikeTrain) : 
     """Class representation of a spike train with a firing rate that is a 
@@ -277,6 +357,12 @@ class NonConstantSpikeTrain (SpikeTrain) :
         super().__init__(T, Δt) 
         self.tuncurve = tuncurve
         self.stimcurve = stimcurve
+
+    def gen_spike_train_point(self, t):
+        δ = lambda x: 1 if x >= random.random() else 0
+        f, g = self.tuncurve.f, self.stimcurve
+        return δ( f( g(t) ) * self.Δt)
+
 
     def gen_spike_train(self):
         """Generates a spike train whose firing rate is time- and stimulus- 
@@ -364,7 +450,30 @@ class NonConstantSpikeTrain (SpikeTrain) :
             values.append(c_of_τ/n)
 
         return values
+
+    def point_stim_fr_corr(self, τ):
+        """Compute the time correlation of functions f and t. Importantly, 
+        f and g are taken to be lists with the function values rather than 
+        functions themselves, and τ is taken to be an indexing distance rather 
+        than a real-valued distance.
+
+
+        Args:
+            f (list): Values of f(t)
+            g (list): Values of g(t)
+            τ (int): Index distance of the values being correlated at each time
+            point.
+        """
         
+        value = 0
+        r = self.point_firing_rate
+        s = self.stimcurve
+        corrs = [r(t) * s(t + τ) for t in self.t]
+
+        return sum(corrs)/self.T
+
+    def stim_fr_corr(self):
+        return [spikes.stim_fr_corr(t) for t in spikes.t]
         
 
 
