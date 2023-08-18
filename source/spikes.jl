@@ -131,7 +131,7 @@ struct SpikeMatrix
 
     function SpikeMatrix(T, Δt, tuncurve, stimcurve)
         m = T / Δt + 1
-        binary_matrix = hcat([SpikeTrain(T, Δt, tuncurve, stimcurve).spike_train for _ in 1:m]...)
+        binary_matrix = transpose(hcat([SpikeTrain(T, Δt, tuncurve, stimcurve).spike_train for _ in 1:m]...))
         eigen_decomp = eigen(binary_matrix)
         eigenvalues = eigen_decomp.values
         eigenvectors = eigen_decomp.vectors
