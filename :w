@@ -1,0 +1,47 @@
+
+from manim import * 
+import random
+import numpy as np
+from fr.spikes import NonConstantSpikeTrain, TuningCurve, SpikeTrain
+import math 
+
+tuncurve = TuningCurve(5, 20, 2, [-40, 40])
+spikes = NonConstantSpikeTrain(100, 0.1, tuncurve)
+spikes.spike_train = spikes.gen_spike_train()
+r = spikes.linear_delta_filter(10)
+
+def f(s):
+        return 5 * math.exp((-0.5 * (s - 0)/2)**2)
+
+def stimcurve(x):
+    return 4/5 * x - 40
+
+class Filter(Scene):
+
+    def construct(self):
+
+        Δt = 0.01 
+        axes = Axes(x_range=[0, 100, 1], y_range=[0, 1.2, 1], 
+                    x_axis_config={"include_ticks": False})
+
+        self.play(Write(axes, lag_ratio=0.01, run_time=1))
+        δ = lambda x: 1 if x >= random.random() else 0
+        sin_graph = axes.plot(
+            lambda x: δ(f(stimcurve(x)) * Δt),
+            x_range=[0.001, 100],
+            use_smoothing=False
+        )
+
+        self.play(
+            Create(sin_graph), run_time=5
+        )
+
+        # Add points and lines
+        #lines = [Line(points[i], points[i+1], color=WHITE) for i in range(len(points) - 1)]
+        #dots = [Dot(points[i], color=WHITE) for i in range(len(points))]
+
+        #self.play(Create(VGroup(*lines)), Create(VGroup(*dots)))
+    
+
+
+

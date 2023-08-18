@@ -1,5 +1,4 @@
-using Distributions
-using Revise
+using LinearAlgebra
 
 
 struct TuningCurve
@@ -86,60 +85,118 @@ mutable struct SpikeTrain
     end
 end
 
+struct SpikeMatrix
+    """
+    Ω is a struct whose main attribute is a matrix of the same name. 
+    The matrix Ω is an m × m matrix whose column vectors ω₁, …, ωₘ are binary
+    vectors with simulated spike trains. The integer m is defined to be the 
+    number of discrete time bins of which is simulation is composed. In 
+    particular, m = T/Δt, where T is the abstract duration of the trial and 
+    Δt the size of each discrete time bin. 
+
+    Parameters 
+    ----------
+    T : number > 0 
+        Duration of each simulation.
+    Δt : number > 0
+        Size of the infinitesimally small bins that split the time domain on 
+        each simulation.
+    tuncurve : TuningCurve
+        The TuningCurve of each simulation. 
+        The TuningCurve struct represents the function that governs the 
+        variation of r = f(s), the firing rate as a function of a stimulus 
+        parameter. The stimulus parameter is on its turn  a function s = g(t) 
+        of time.
+    stimcurve : function
+        The stimulus curve of each simulation. 
+        It is a periodic mapping from ℝ to ℝ. It is the function s(t) of a stimulus
+        parameter with respect to time. Periodicity must be imposed into
+        whatever function describes the stimulus across time for some of the
+        calculations to make sense. Such condition is often easy to impose
+        using standard mathematical methods even on non-periodic functions.
+
+    Fields 
+    ------
+    X : A square binary matrix.
+    eigenvalues : Eigenvalus of Ω
+    eigenvectors : Eigenvectors of Ω
+    D : Diagonal representation of Ω over the basis formed by the eigenvectors.
+    """
+
+    X::Matrix
+    eigenvalues::Vector{Number}
+    eigenvectors::Matrix{Number}
+    D::Diagonal
+    t::Vector{Float32}
+
+    function SpikeMatrix(T, Δt, tuncurve, stimcurve)
+        m = T / Δt + 1
+        binary_matrix = hcat([SpikeTrain(T, Δt, tuncurve, stimcurve).spike_train for _ in 1:m]...)
+        eigen_decomp = eigen(binary_matrix)
+        eigenvalues = eigen_decomp.values
+        eigenvectors = eigen_decomp.vectors
+        D = Diagonal(eigenvalues)
+        t = collect(0:Δt:T)
+
+        new(binary_matrix, eigenvalues, eigenvectors, D, t)
+    end
+end
+
+
 function sta(spike_train::SpikeTrain)
-        """
-        The spike-triggered average (STA) of a stimulus is a function C(τ) of 
-        time that computes the average value of a stimulus τ time units prior 
-        to the generation of an action potential. For an individual spike train,
-        it is defined as 
+    """
+    The spike-triggered average (STA) of a stimulus is a function C(τ) of 
+    time that computes the average value of a stimulus τ time units prior 
+    to the generation of an action potential. For an individual spike train,
+    it is defined as 
 
-                                C(τ) = 1/n * ∑ⁿ (s(tᵢ - τ))
+                            C(τ) = 1/n * ∑ⁿ (s(tᵢ - τ))
 
-        where t₁, …, tₙ are the spike times in the train and s(t) is 
-        the stimulus curve.
-        """
-      
-        values = []
-        for τ in spike_train.t
-            Cτ = sum([spike_train.stimcurve(t - τ)
-                      for t in spike_train.spike_times]
-                      ) / spike_train.n
-            push!(values, Cτ)
-        end
+    where t₁, …, tₙ are the spike times in the train and s(t) is 
+    the stimulus curve.
+    """
 
-        return values
+    values = []
+    for τ in spike_train.t
+        Cτ = sum([spike_train.stimcurve(t - τ)
+                  for t in spike_train.spike_times]
+        ) / spike_train.n
+        push!(values, Cτ)
+    end
+
+    return values
 end
 
 function mean_sta(st::SpikeTrain)
-        """
-        The mean spike-triggered average (STA) of a stimulus is the trial
-        average of a  function C(τ) of time that computes the average value of
-        a stimulus τ time units prior to the generation of an action potential.
+    """
+    The mean spike-triggered average (STA) of a stimulus is the trial
+    average of a  function C(τ) of time that computes the average value of
+    a stimulus τ time units prior to the generation of an action potential.
 
-        Because trial average spikes are no longer binary values in {0, 1} 
-        but frequencies, there is no sequence {t₁, …, tₙ} to be used for the 
-        computation, and the alternative definition
+    Because trial average spikes are no longer binary values in {0, 1} 
+    but frequencies, there is no sequence {t₁, …, tₙ} to be used for the 
+    computation, and the alternative definition
 
-                                C(τ) = 1/⟨n⟩ ∫ᵀ ⟨ρ(t)⟩s(t - τ) dt 
+                            C(τ) = 1/⟨n⟩ ∫ᵀ ⟨ρ(t)⟩s(t - τ) dt 
 
-        is used, where ⟨ ⋅ ⟩ denotes a trial average value and the inferior 
-        integral bound is 0. This definition is a bit more complicated, and 
-        its computation is more costly compared to STA estimation with a unique 
-        spike train, but it is also statistically more precise.
-        """
+    is used, where ⟨ ⋅ ⟩ denotes a trial average value and the inferior 
+    integral bound is 0. This definition is a bit more complicated, and 
+    its computation is more costly compared to STA estimation with a unique 
+    spike train, but it is also statistically more precise.
+    """
 
-        values = []
-        avg_st = st.avg_spike_train 
-        n = st.avg_n 
+    values = []
+    avg_st = st.avg_spike_train
+    n = st.avg_n
 
-        for τ in st.t
-            c_of_τ = 0
-            for time_index in range(1, length(st.t))
-                t = st.t[time_index]
-                ρ_at_t = avg_st[time_index]
-                c_of_τ += ρ_at_t * st.stimcurve(t - τ)
-            end
-            push!(values, c_of_τ/n)
+    for τ in st.t
+        c_of_τ = 0
+        for time_index in range(1, length(st.t))
+            t = st.t[time_index]
+            ρ_at_t = avg_st[time_index]
+            c_of_τ += ρ_at_t * st.stimcurve(t - τ)
+        end
+        push!(values, c_of_τ / n)
     end
 
     return values
@@ -160,7 +217,7 @@ function firing_rate(spike_train::SpikeTrain, t)
     """
     index = findall(x -> x == t, spike_train.t)
     avg_ρ_of_t = spike_train.avg_spike_train[index]
-    return 1/spike_train.Δt * avg_ρ_of_t
+    return 1 / spike_train.Δt * avg_ρ_of_t
 end
 
 function firing_rate(spike_train::SpikeTrain)
@@ -180,20 +237,20 @@ function stim_fr_corr(spike_train::SpikeTrain, τ::Int)
         τ (int): Index distance of the values being correlated at each time
         point.
     """
-    
+
     r(t) = firing_rate(spike_train, t)
     s = spike_train.stimcurve
     corrs = [r(t) * s(t + τ) for t in spike_train.t]
 
-    return sum(corrs)/spike_train.T
+    return sum(corrs) / spike_train.T
 end
 
 function stim_fr_corr(spike_train::SpikeTrain)
-        return [stim_fr_corr(spike_train, t) for t in spike_train.t]
+    return [stim_fr_corr(spike_train, t) for t in spike_train.t]
 end
 
 function gen_avg_spike_train(st::SpikeTrain, n_trials::Int)
-    @assert n_trials > 0 
+    @assert n_trials > 0
     trials = [SpikeTrain(st.T, st.Δt, st.tuncurve, st.stimcurve) for _ in range(1, n_trials)]
     st.avg_spike_train = reduce(+, [trial.spike_train for trial in trials]) ./ n_trials
     st.avg_n = sum(trial.n for trial in trials) ./ n_trials
@@ -201,7 +258,7 @@ end
 
 function get_avg_firing_rate(st::SpikeTrain)
     @assert !isempty(st.avg_spike_train)
-    st.avg_n/st.T
+    st.avg_n / st.T
 end
 
 function autocorr(st::SpikeTrain, τ::Int)
@@ -212,11 +269,11 @@ function autocorr(st::SpikeTrain, τ::Int)
     value = 0
     for t in range(1, N)
         t_plus_tau = t + τ <= N ? t + τ : ((t + τ) % N) + 1 # +1 to make index > 0
-        a = avg_st[t] - r 
+        a = avg_st[t] - r
         b = avg_st[t_plus_tau]
         value += a * b
-    end 
-    value/st.T
+    end
+    value / st.T
 end
 
 function autocorr(st::SpikeTrain)
@@ -252,7 +309,7 @@ function ω(st::SpikeTrain, Δt::Int)
         lower_bound = i > Δt ? i - Δt : 1
         upper_bound = i + Δt <= N ? i + Δt : N
         bin = st.spike_train[lower_bound:upper_bound]
-        push!(counts, count(x -> x == 1, bin)/Δt)
+        push!(counts, count(x -> x == 1, bin) / Δt)
     end
     return counts
 end
@@ -283,7 +340,7 @@ function γ(st::SpikeTrain, σ::Float64)
     """
 
     N = length(st.spike_train)
-    g(t) = (1/(sqrt(2* pi) * σ)) * exp(-t^2/(2*σ^2))
+    g(t) = (1 / (sqrt(2 * pi) * σ)) * exp(-t^2 / (2 * σ^2))
 
     results = []
     for i in range(1, N)
@@ -291,7 +348,10 @@ function γ(st::SpikeTrain, σ::Float64)
         r_of_t = sum([g(d) for d in distances])
         push!(results, r_of_t)
     end
-    
-    return results
 
+    return results
 end
+
+
+
+
