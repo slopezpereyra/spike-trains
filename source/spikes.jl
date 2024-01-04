@@ -87,12 +87,28 @@ end
 
 struct SpikeMatrix
     """
-    Ω is a struct whose main attribute is a matrix of the same name. 
-    The matrix Ω is an m × m matrix whose column vectors ω₁, …, ωₘ are binary
-    vectors with simulated spike trains. The integer m is defined to be the 
-    number of discrete time bins of which is simulation is composed. In 
-    particular, m = T/Δt, where T is the abstract duration of the trial and 
-    Δt the size of each discrete time bin. 
+    If a spike vector ω ∈ {0, 1}ⁿ is defined s.t. 
+
+                        ωᵢ~ Bernoulli( r(tᵢ)Δt )
+
+    where tᵢ∈ ℝ is the time corresponding to the ith time bin, with i ∈ ℕ s.t. 
+    1 ≤ i ≤ n, then a spike matrix Ω is an n × n matrix whose row vectors are 
+    spike vectors.
+
+    The struct SpikeMatrix represents such Ω matrix with some of its relevant
+    properties according to my own research. It is trivial to observe that ⟨ρ⟩
+    is the average row vector. Non-trivial properties exist that pertain to 
+    the spectrum of Ω. Generally speaking, the Perron eigenvalue 𝒫 (Ω) is a 
+    functon of σ and 𝕊(f), the variance and supremum of the tuning curve f.
+    The corresponding Perron eigenvector α is s.t. 
+
+                                α ≈ ⟨ρ⟩
+
+    at least in shape. Further research on the reason why the coefficients of α
+    share almost the same proportionality than those of ⟨ρ⟩ is due. The reason 
+    why 𝒫 (Ω) is a function of σ and S(f) is elaborated in a research note 
+    that I made public on my website.
+
 
     Parameters 
     ----------
@@ -102,8 +118,8 @@ struct SpikeMatrix
         Size of the infinitesimally small bins that split the time domain on 
         each simulation.
     tuncurve : TuningCurve
-        The TuningCurve of each simulation. 
-        The TuningCurve struct represents the function that governs the 
+        The tuning curve to be used in each simulation. The 
+        TuningCurve struct represents the function that governs the 
         variation of r = f(s), the firing rate as a function of a stimulus 
         parameter. The stimulus parameter is on its turn  a function s = g(t) 
         of time.
@@ -128,6 +144,7 @@ struct SpikeMatrix
     eigenvectors::Matrix{Number}
     D::Diagonal
     t::Vector{Float32}
+    avg_spike_train::Vector{Float32}
 
     function SpikeMatrix(T, Δt, tuncurve, stimcurve)
         m = T / Δt + 1
@@ -137,8 +154,9 @@ struct SpikeMatrix
         eigenvectors = eigen_decomp.vectors
         D = Diagonal(eigenvalues)
         t = collect(0:Δt:T)
+        avg_spike_train = vec(sum(binary_matrix, dims=1)) .* 1/m
 
-        new(binary_matrix, eigenvalues, eigenvectors, D, t)
+        new(binary_matrix, eigenvalues, eigenvectors, D, t, avg_spike_train)
     end
 end
 
